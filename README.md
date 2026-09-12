@@ -1,5 +1,7 @@
 ﻿# Thought OS — Open Specification & Reference Kernel
 
+> [English](README.md) · [中文](README.zh-CN.md)
+
 **Thought OS exists to augment human thinking, never replace it.**
 
 Thought OS is a personal cognitive operating system. It is not a knowledge base,
@@ -96,4 +98,4 @@ billing layers remain private and are not part of this repository.
 Open Specification, not Open Source Engineering: the value is in the reusable
 specification assets, not in forking the product.
 
-Copyright © 2026 Mingjie Ye (叶明杰).
+Copyright © 2026 Mingjie Ye.

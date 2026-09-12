@@ -1,6 +1,6 @@
 ﻿# ADR-0028: Representation — source / epistemic_status / authority_status 表达语义
 
-> **Copyright © 2026 Mingjie Ye (叶明杰). Licensed under CC BY 4.0.**
+> **Copyright © 2026 Mingjie Ye. Licensed under CC BY 4.0.**
 >
 > 本文档是 Thought OS 的开放规范资产（Open Specification），采用知识共享署名 4.0 国际许可协议（CC BY 4.0）。
 > 你可以复制、再发布、修改、商业使用，并基于本规范实现自己的系统，但须适当署名并注明是否修改。

@@ -2,6 +2,7 @@
 LICENSE-CODE
 LICENSE-DOCS
 README.md
+README.zh-CN.md
 adr\0001-tension-as-relation-challenges.md
 adr\0002-tension-endpoint-is-interpretation.md
 adr\0003-extractor-stops-at-interpretation.md
