@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/Reflection.schema.json",
+  "title": "Reflection",
+  "description": "重构 v2 新增：一次 Reflection Event（认知演化历史中的事件，记录'某时发生的一次反思'），而非一段总结文本或容器。它可选地直接生成/更新一条 Thought（state=emerging）及其首张成熟度 Snapshot。事件溯源通过 generated_thought_ids 显式记录产出。定义见 specs/concepts/Reflection.md。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "user_id", "content", "created_at"],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reflection Event 的概要（summary）：对一段对话/经历的结构化概括（用户视角，AI 只映照不下结论）。注意：Reflection 的价值在于它是'一次反思事件'及其 generated_thought_ids，而非这段文本本身。"
+    },
+    "triggers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "触发事件/情境（临时结构的一部分）。"
+    },
+    "emotional_context": {
+      "type": "string",
+      "default": "",
+      "description": "情绪背景（可选，非必填，避免滑向心理分析器）。"
+    },
+    "initial_question": {
+      "type": "string",
+      "default": "",
+      "description": "初步问题（思考的起点，非定论）。"
+    },
+    "related_experiences": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "相关经历引用。"
+    },
+    "conversation_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "本 Reflection Event 源自的 Conversation id 列表（证据溯源）。"
+    },
+    "generated_thought_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Reflection Event 的产出：本次事件直接生成的 Thought id 列表（事件溯源，无产出则为空数组）。"
+    },
+    "space_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "所属 Thinking Space id。"
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["personality_type"] },
+      { "required": ["psychological_profile"] }
+    ]
+  }
+}

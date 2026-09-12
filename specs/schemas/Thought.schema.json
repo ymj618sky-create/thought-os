@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/Thought.schema.json",
+  "title": "Thought",
+  "description": "一个经过用户确认、可长期存在、且能追溯到至少一条 Evidence 的认知单元。定义见 specs/concepts/Thought.md，任何字段变更须先修改该文档，schema 与文档不一致视为 schema bug。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "user_id",
+    "content",
+    "lattice_level",
+    "status",
+    "version",
+    "evidence_ids",
+    "origin_type",
+    "confirmed_at",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "唯一标识"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "所属用户，遵循 S-2.1：可导出、可追溯"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "description": "思想的正式表述（一段连贯的文字，可多句）。必须是用户自己的原话，或用户明确确认过的改写；不得包含未经确认的推测性措辞（如'似乎''可能是'等 Interpretation 语气残留）。重构后 Thought 承载的是'一段思想'而非单句碎片，故允许较长的段落。"
+    },
+    "thesis": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "重构新增：核心主张的一句话提炼，用于思想列表/卡片标题。为空时前端回退到 content 的摘要。它是 Thought 的主体标识，晶格仅是它的投影标签。"
+    },
+    "premises": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": [],
+      "description": "重构新增：支撑这条思想的理由（用户自己认可的前提）。可空；用于思想详情页展示论证结构。"
+    },
+    "tension_ref": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "重构新增：这条思想在回应/化解的张力（可指向 Relation id、Interpretation id，或直接是一段张力文本）。呼应 projection.tension 的实际落点。"
+    },
+    "lattice_level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12,
+      "description": "主坐标：思想在 12 微观晶格中的主导定位（见 specs/concepts/Thought.md 的坐标系表），驱动主要的索引/可视化/图谱聚合"
+    },
+    "lattice_levels_secondary": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1, "maximum": 12 },
+      "uniqueItems": true,
+      "default": [],
+      "description": "次坐标：记录确实存在但非主导的其他晶格维度。不得包含与 lattice_level 相同的值——这条跨字段约束需在应用层校验，JSON Schema 本身无法声明式表达'数组不得包含另一字段的值'"
+    },
+    "protocol": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Runtime v2.0：主导认知方式（主协议）。v1 兼容字段——完整多坐标投影见 projection.protocol；此处仅保留主方法，用于索引/可视化与旧数据兼容。"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "superseded", "archived"],
+      "description": "禁止物理删除，遵循 S-4.1；历史版本只能通过 status 流转，不可从数据中移除"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "从 1 开始，每次修正/深化递增"
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "指向替代它的新版本 Thought id；仅当 status=superseded 时应有非 null 值"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 0,
+      "uniqueItems": true,
+      "description": "支撑该 Thought 的底层 Evidence id 列表（S-3.1 可追溯）。重构后 user_authored（用户认领）型 Thought 来源即用户确认动作本身，可为空数组。"
+    },
+    "origin_type": {
+      "type": "string",
+      "enum": ["user_authored", "derived_from_interpretation"],
+      "description": "user_authored：用户直接写下；derived_from_interpretation：源自某条被用户确认的 Interpretation"
+    },
+    "origin_interpretation_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "当 origin_type=derived_from_interpretation 时，指向来源的 Interpretation；该字段只读，不可被逆向改写"
+    },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "用户执行确认动作的时间，不是 AI 生成内容的时间"
+    },
+    "related_thought_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": [],
+      "description": "反向索引，仅用于查询效率。关系类型、置信度、建立/变更时间等权威数据由独立的 Relation 实体（Relation.schema.json）持有，此字段与 Relation 表不一致时以 Relation 表为准"
+    },
+    "related_question_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "关联的 Question：可以是对某个 Question 的阶段性回应，也可以是催生的新问题"
+    },
+    "space_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "所属 Thinking Space id（Product Aggregate Layer v0.1）。属于上层聚合归属，不参与 Kernel 认知校验；旧记录无此字段即为未归属"
+    },
+    "source_reflection_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "触发该 Thought 落库的 Reflection id（Phase 1 预留：关联 Artifact ↔ Reflection）。仅当由反思事件派生时非空"
+    },
+    "origin_reflection_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "重构 v2：指向生成此 Thought 候选的 Reflection（v2 分层模型中 Reflection→Thought 的桥梁引用）。非用户确认 Interpretation 路径时可为空。"
+    },
+    "maturity_stage": {
+      "type": "string",
+      "enum": ["emerging", "developing", "stable", "core"],
+      "default": "emerging",
+      "description": "重构 v2：成熟度阶段（冗余派生字段）。真相在 ThoughtMaturitySnapshot 的四维向量，stage 仅由其计算，绝不存为权威事实。用于查询/展示过滤。注意：不叫 status，避免与 active/inactive/deleted 混淆。"
+    },
+    "projection": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "Runtime v2.0 多坐标投影：由 Interpretation 在 Confirmation 时计算得出。包含 lattice（按权重排序的晶格投影，lattice[0] 为主坐标）、protocol（认知方式投影）、tension（主张力摘要）。替代旧的单一 protocol/lattice_level 绑定",
+      "properties": {
+        "lattice": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": { "type": "integer", "minimum": 1, "maximum": 12 },
+              "weight": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "required": ["level", "weight"]
+          }
+        },
+        "protocol": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "protocol": { "type": "string" },
+              "weight": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "required": ["protocol", "weight"]
+          }
+        },
+        "tension": {
+          "type": ["string", "null"],
+          "description": "主导张力摘要（来自 Interpretation.tension 的加权平均），用于首页/空间页张力提示"
+        }
+      },
+      "required": ["lattice", "protocol"]
+    },
+    "tension": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Runtime v2.0：该 Thought 主关联 Interpretation 的张力摘要（与 projection.tension 同源，便于单条检索）"
+    },
+    "fails_when": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "提炼层准入语义（Thought_Admission_Semantics v0.1）：该判断在什么情况下失效/不成立。为空时即使 admission.status=candidate 也不能升级为 confirmed。与 thesis/premises 共同构成思想的'可负责结构'。"
+    },
+    "applies_when": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "ADR-0020 §6.1：该判断成立的条件/适用范围。与 fails_when 共同界定认知模型的边界——没有边界的判断不是模型，是口号。为空表示边界尚未界定。"
+    },
+    "last_tested": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ADR-0020 §6.1：最近一次被现实检验的时间。**刻意替代 confidence 字段**：Thought 的可信度不由 AI 打分（schema 顶层 not 约束禁止 confidence/importance_score，因置信度若由系统写入即构成认知越权），而由『是否已被现实检验、检验结果如何』客观表达。为 null = 从未被检验，UI 应显示为未经检验而非给出分数。"
+    },
+    "decisions_influenced": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": [],
+      "description": "ADR-0020 §6.2：受这条 Thought 影响的 Decision id 列表（与 Decision.thought_ids 互为反向索引）。使『思考 → 决策』的链路可追溯，也是判断一条思想是否真正进入现实的关键指标。"
+    },
+    "outcome_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": [],
+      "description": "ADR-0020 §16 P4：检验过这条 Thought 的 Outcome id 列表（反向索引，权威数据在 Outcome.thought_ids）。非空即表示这条判断已被现实检验；配合 Outcome.invalidates_thoughts 可判断它是否已被证伪。"
+    },
+    "admission": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "提炼层准入语义（Thought_Admission_Semantics v0.1）。null = 纯素材，尚未进入候选。系统可提名 candidate，但 confirmed 只能由用户确认动作产生——系统推断绝不等价于用户承担。",
+      "properties": {
+        "signals": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["recurrence", "conflict", "revision"] },
+          "uniqueItems": true,
+          "description": "系统发现的准入证据：recurrence=反复出现值得注意；conflict=存在需解决的认知张力；revision=已推翻/修正过去判断（信号最强）。空数组不算候选。"
+        },
+        "thesis": {
+          "type": "string",
+          "description": "思想核心主张（与顶层 thesis 同源）。准入结构的一部分。"
+        },
+        "premises": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "支撑判断的前提。空数组 = 结构不完备，不能 confirmed。"
+        },
+        "fails_when": {
+          "type": "string",
+          "description": "该判断失效的条件。为空 = 不能 confirmed。"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["candidate", "confirmed"],
+          "description": "candidate = 系统提名未认领；confirmed = 用户承担负责，可进入思想空间。"
+        },
+        "confirmed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "仅当 status=confirmed 时非 null，记录用户确认动作时间而非 AI 生成时间。"
+        }
+      },
+      "required": ["signals", "thesis", "premises", "fails_when", "status"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "superseded" } }
+      },
+      "then": {
+        "required": ["superseded_by"],
+        "properties": {
+          "superseded_by": { "type": "string" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "origin_type": { "const": "derived_from_interpretation" } }
+      },
+      "then": {
+        "required": ["origin_interpretation_id"],
+        "properties": {
+          "origin_interpretation_id": { "type": "string" }
+        }
+      }
+    }
+  ],
+  "not": {
+    "anyOf": [
+      { "required": ["confidence"] },
+      { "required": ["importance_score"] }
+    ]
+  }
+}

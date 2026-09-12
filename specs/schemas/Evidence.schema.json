@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/Evidence.schema.json",
+  "title": "Evidence",
+  "description": "用户的原始表达，未经改写，原文存储，写入后不可变。定义见 specs/concepts/Evidence.md。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "user_id",
+    "raw_content",
+    "content_hash",
+    "source_type",
+    "captured_at",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "raw_content": {
+      "type": "string",
+      "minLength": 1,
+      "description": "原文，逐字存储。应用层必须禁止对已存在记录的此字段做 UPDATE 操作，只允许整条记录随用户删除请求一起删除"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "raw_content 的哈希值（如 SHA-256），用于校验内容未被静默篡改"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": ["chat_message", "voice_transcript", "uploaded_text", "uploaded_file", "web_research"],
+      "description": "输入渠道。web_research 为 ADR-0020 P1（World + Explore）新增：经 Web 检索/抓取取得的外部世界材料，配套 origin='world' 与 world_ref 使用。"
+    },
+    "origin": {
+      "type": "string",
+      "enum": ["self", "world", "action"],
+      "default": "self",
+      "description": "ADR-0020 §5：Evidence 的**来源世界**维度。self=来自用户自身（表达/经历/观察/反思）；world=来自外部世界（事实/事件/研究/市场/他人观点/变化）；action=来自行动与结果（决策/行动/结果）。旧记录缺省视为 'self'，无需迁移。注意：这与 source_type（输入渠道，如 chat_message）正交——同一条 chat_message 既可能是 self（用户自述经历），也可能是 world（用户转述的一条外部事实），由 origin 决定它参与哪类认知。"
+    },
+    "evidence_kind": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "ADR-0020 §5 的细分类型，仅在 origin 明确时有意义。self: statement|experience|observation|reflection；world: fact|event|research|market|other_opinion|change；action: decision|action|outcome。为 null 表示未分类（兼容存量数据）。"
+    },
+    "world_ref": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "当 origin='world' 时记录外部来源，使『这条信息从哪来』可核查——这是 world evidence 与用户主观表达的关键区别（不可核查的 world 证据不得驱动 Challenge）。",
+      "properties": {
+        "source": { "type": "string", "description": "来源名称（如 'Reuters'、'arXiv:2401.12345'、'公司内部数据'）" },
+        "url": { "type": ["string", "null"], "description": "可核查链接" },
+        "retrieved_at": { "type": ["string", "null"], "format": "date-time", "description": "检索时间（外部事实会随时间变化，须记录时效）" },
+        "publisher": { "type": ["string", "null"] },
+        "credibility": {
+          "type": ["string", "null"],
+          "enum": ["primary", "reputable", "unknown", "contested"],
+          "description": "来源可信度标签。仅用于提示，不用于自动加权排序。"
+        }
+      }
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "原始内容产生的时间，可能早于 created_at"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "speaker": {
+      "type": "string",
+      "enum": ["user", "mirror"],
+      "description": "Bidirectional Thought Formation (Phase A)：Evidence 的说话方；Mirror 回复落成 Evidence 时为 'mirror'，历史记录缺省视为 'user'。"
+    },
+    "conversation_event_id": {
+      "type": ["string", "null"],
+      "description": "指向原始 Conversation Event id（CONVERSATION_TABLE.id），用于 Mirror 回复溯源（Phase A）。"
+    },
+    "raw_evidence_id": {
+      "type": ["string", "null"],
+      "description": "C-004 Provenance：指向产生此 Evidence 的原始材料 RawEvidence id（specs/schemas/RawEvidence.schema.json）。导入文字经 RawEvidence 派生时须回填，使 provenance 链 Evidence ← RawEvidence 闭合；直接来自对话的 Evidence 为 null。"
+    }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["summary"] },
+      { "required": ["tags"] },
+      { "required": ["category"] }
+    ]
+  }
+}

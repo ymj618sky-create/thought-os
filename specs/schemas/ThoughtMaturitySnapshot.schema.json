@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/ThoughtMaturitySnapshot.schema.json",
+  "title": "ThoughtMaturitySnapshot",
+  "description": "重构 v2 新增：Thought 成熟度快照。保留历史轨迹，不覆盖——用于呈现 Thought Evolution Timeline。成熟度是四维向量（clarity/stability/recurrence/connection），stage 仅由向量派生，绝不存为权威事实。评分绝不阻断 Thought 进入长期区，只作为展示/检索信号。定义见 specs/Rethink_Refactor_Plan.md。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "user_id", "thought_id", "clarity", "stability", "recurrence", "connection", "calculated_at"],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string", "description": "快照归属用户（存储层统一索引需要）" },
+    "thought_id": { "type": "string" },
+    "clarity": {
+      "type": "number", "minimum": 0, "maximum": 1,
+      "description": "清晰度：思想表述是否明确。"
+    },
+    "stability": {
+      "type": "number", "minimum": 0, "maximum": 1,
+      "description": "稳定性：思想是否反复一致、不漂移。"
+    },
+    "recurrence": {
+      "type": "number", "minimum": 0, "maximum": 1,
+      "description": "复现度：在对话中出现的频率。"
+    },
+    "connection": {
+      "type": "number", "minimum": 0, "maximum": 1,
+      "description": "连接度：与其他 Thought / 经历的关联广度。"
+    },
+    "calculated_at": { "type": "string", "format": "date-time" }
+  }
+}

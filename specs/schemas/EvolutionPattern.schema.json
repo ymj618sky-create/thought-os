@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/EvolutionPattern.schema.json",
+  "title": "EvolutionPattern",
+  "description": "Step B：Confirmed Evolution Trace 的轻量聚合结果（非新架构层，非 Memory/Knowledge/Profile/Ranking）。捕获的是'变化模式'而非'主题'：source_pattern → transformation_pattern 的重复结构。核心约束：只能由 ≥3 条 confirmed Evolution Trace 聚合产生，绝不读取裸 Thought，绝不从单条 Evolution 推 Pattern。只记录可回溯证据（evidence_trace_ids），LLM 仅负责把已存在结构归纳成自然语言。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "user_id", "pattern", "core_concepts",
+    "source_pattern", "transformation_pattern",
+    "evidence_trace_ids", "evidence_count", "status",
+    "proposed_at", "created_at", "updated_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string", "description": "归属用户（存储层统一索引需要）" },
+    "pattern": {
+      "type": "string",
+      "description": "LLM 归纳的自然语言描述，仅把已存在的重复结构翻译成文字。例如：'在多个关系议题中，反复将情感或互动问题重新理解为双方责任关系。'"
+    },
+    "core_concepts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "确定性抽取的核心概念（从 evidence trace 的 old/new stance 归一化）。例如 ['理解', '责任', '关系']。"
+    },
+    "source_pattern": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "反复出现的原始立场形态。例如 ['关系中的理解', '关系中的信任']。"
+    },
+    "transformation_pattern": {
+      "type": "string",
+      "description": "反复出现的转变方向。例如 '→ 责任关系'。"
+    },
+    "evidence_trace_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "所有支撑本 Pattern 的 confirmed Evolution Trace id，可一路回溯到 Thought。"
+    },
+    "evidence_count": {
+      "type": "integer",
+      "minimum": 3,
+      "description": "支撑证据数（= evidence_trace_ids.length），必须 ≥3 才允许产生 candidate。"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["candidate", "confirmed", "challenged"],
+      "description": "candidate=系统聚合建议未确认；confirmed=用户确认（才进入 Portrait 证据）；challenged=用户质疑（重新评估，不进入 Portrait）。"
+    },
+    "proposed_at": { "type": "string", "format": "date-time" },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "仅 status=confirmed 时存在"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

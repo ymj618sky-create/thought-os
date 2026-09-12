@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/Outcome.schema.json",
+  "title": "Outcome",
+  "description": "现实反馈记录：『当时怎么判断 → 做了什么 → 结果怎么样』（ADR-0020 §16 P4）。这是 Thought OS 唯一能证明『认知是否真的被现实检验过』的实体，也是 L5 Cognitive Growth 与 Revisit/Challenge 的数据来源。没有 Outcome，Thought 永远只是观点；有了 Outcome，Thought 才成为可检验的模型。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "user_id",
+    "action",
+    "outcome",
+    "outcome_type",
+    "recorded_at",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string", "description": "唯一标识" },
+    "user_id": { "type": "string", "description": "所属用户（S-2.1）" },
+
+    "decision_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "关联的 Decision id。可为空——并非所有结果都来自一次显式决策（如未决策但发生了的事）。"
+    },
+    "thought_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "本次结果所检验的 Thought id 列表。这是『判断 vs 现实』的连接点：一个 Thought 是否曾被现实检验，取决于是否存在指向它的 Outcome。"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "支撑本次结果记录的 Evidence id（S-3.1 可追溯）。"
+    },
+
+    "action": {
+      "type": "string",
+      "minLength": 1,
+      "description": "实际做了什么（或实际发生了什么）。只记录事实，不评价。"
+    },
+    "outcome": {
+      "type": "string",
+      "minLength": 1,
+      "description": "结果如何。同样是事实描述。"
+    },
+    "outcome_type": {
+      "type": "string",
+      "enum": ["as_expected", "better", "worse", "mixed", "unknown"],
+      "description": "结果相对于 expected_outcomes 的对照结论。unknown 表示尚无法判断——**允许 unknown**，在信息不足时强行下结论比不下结论更糟。"
+    },
+
+    "expected_vs_actual": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "预期与实际的差距说明。这是校准（calibration）能力的核心输入：系统性偏差从这里被识别。"
+    },
+    "learned": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "从这个结果中学到了什么。**只由用户写入**（与 Decision.decision 同宪法约束）：系统可以追问、可以提示，但不得替用户总结『你学到了 X』。"
+    },
+    "invalidates_thoughts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "被本次结果证伪/削弱的 Thought id。与 thought_ids 的区别：thought_ids=参与检验，invalidates_thoughts=检验后不再成立。用于 Challenge 与 Revisit。"
+    },
+    "surprises": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "超出预期、事先没想到的部分。这是发现『假设错误』最直接的来源。"
+    },
+
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "结果被记录的时间（用户录入时刻）。"
+    },
+    "occurred_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "结果实际发生的时间，可能早于 recorded_at。"
+    },
+    "space_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "所属 Thinking Space id。上层聚合归属，不参与 Kernel 认知校验。"
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

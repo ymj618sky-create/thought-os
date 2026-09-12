@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/EvolutionTrace.schema.json",
+  "title": "EvolutionTrace",
+  "description": "Thought Evolution 最小闭环实体（设计冻结 v0.1）。连接两个 Thought（或其最新 MaturitySnapshot）之间的变化关系。本身不持 authority（ADR-0028 Q5 Projection 约束），仅为已有事实之间的关系载体，非新事实源。只在用户确认后 status=confirmed 才视为有效演化轨迹；proposed 状态仅是候选，不构成认知事实。changeType 不由 AI 强制定义，仅作为候选标签供用户判断。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "user_id", "from_thought_id", "to_thought_id",
+    "change_type", "status", "proposed_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string", "description": "归属用户（存储层统一索引需要）" },
+    "from_thought_id": {
+      "type": "string",
+      "description": "演化起点 Thought id（较早的思考状态锚点）"
+    },
+    "to_thought_id": {
+      "type": "string",
+      "description": "演化终点 Thought id（较近的思考状态锚点）"
+    },
+    "change_type": {
+      "type": "string",
+      "enum": [
+        "clarification",
+        "expansion",
+        "tension_added",
+        "question_shift",
+        "reconsideration"
+      ],
+      "description": "候选变化类型（见设计冻结 v0.1 §4）。仅候选标签，不由 AI 强制。"
+    },
+    "old_stance": {
+      "type": "string",
+      "description": "Step A 语义演化核心字段：较早想法 A 的核心立场（第一人称重写），由 LLM 基于 A 内容生成；LLM 不可用时回退直填 A 内容。"
+    },
+    "new_stance": {
+      "type": "string",
+      "description": "Step A 语义演化核心字段：较近想法 B 的核心立场（第一人称重写），由 LLM 基于 B 内容生成；LLM 不可用时回退直填 B 内容。"
+    },
+    "what_changed": {
+      "type": "string",
+      "description": "Step A 语义演化核心字段：从 A 到 B 发生了什么变化（聚焦思想内容转向，而非字数/成熟度），由 LLM 生成。"
+    },
+    "why_likely": {
+      "type": "string",
+      "description": "Step A 语义演化核心字段：推测为什么可能发生这个变化（基于 A、B 内容逻辑，推测性措辞），由 LLM 生成。"
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "支持本次变化候选的溯源 id 列表（Reflection id / Observation id / ThoughtMaturitySnapshot id）。"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "confirmed", "rejected"],
+      "description": "proposed=AI 候选未确认；confirmed=用户确认（才成为有效 Trace）；rejected=用户否认。"
+    },
+    "proposed_at": { "type": "string", "format": "date-time" },
+    "confirmed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "仅 status=confirmed 时存在"
+    }
+  }
+}

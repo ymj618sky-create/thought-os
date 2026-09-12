@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/Relation.schema.json",
+  "title": "Relation",
+  "description": "两个节点（Thought/Question）之间的关系记录，独立于两端节点，拥有自己的生命周期。定义见 specs/concepts/Relation.md。Thought/Question 上的反向索引字段仅为缓存，本实体是权威数据源。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "user_id",
+    "from_id",
+    "from_type",
+    "to_id",
+    "to_type",
+    "relation_type",
+    "origin_type",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "from_id": { "type": "string" },
+    "from_type": { "type": "string", "enum": ["thought", "question", "interpretation"] },
+    "to_id": { "type": "string" },
+    "to_type": { "type": "string", "enum": ["thought", "question"] },
+    "relation_type": {
+      "type": "string",
+      "enum": ["supports", "contradicts", "refines", "merged_from", "answers", "raises", "decomposes", "challenges"]
+    },
+    "origin_type": {
+      "type": "string",
+      "enum": ["user_authored", "ai_suggested"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "rejected", "superseded"]
+    },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "default": null
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "default": null
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "confirmed_at": { "type": ["string", "null"], "format": "date-time", "default": null }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "origin_type": { "const": "ai_suggested" },
+          "status": { "const": "pending" }
+        }
+      },
+      "then": {
+        "required": ["confidence"],
+        "properties": { "confidence": { "type": "number" } }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "superseded" } } },
+      "then": { "required": ["superseded_by"] }
+    },
+    {
+      "if": { "properties": { "status": { "const": "confirmed" } } },
+      "then": { "required": ["confirmed_at"] }
+    },
+    {
+      "if": { "properties": { "from_type": { "const": "interpretation" } } },
+      "then": { "properties": { "relation_type": { "const": "challenges" } } }
+    },
+    {
+      "if": { "properties": { "relation_type": { "const": "challenges" } } },
+      "then": {
+        "properties": {
+          "from_type": { "const": "interpretation" },
+          "to_type": { "const": "thought" }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/RawEvidence.schema.json",
+  "title": "RawEvidence",
+  "description": "External-origin Raw Evidence：用户主动导入的个人认知材料。摄入时保持 raw，不携带任何 Mirror 解释（无 summary / interpretation / sentiment / topic / thought / embedding）。是否升级为 Evidence / Tension / Thought 由后续处理（V2）决定。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "user_id",
+    "content",
+    "source",
+    "timestamp",
+    "content_hash",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "author": {
+      "type": ["string", "null"],
+      "description": "材料的真实作者（通常为用户本人）；与存储归属 user_id 区分"
+    },
+    "content": {
+      "type": "string",
+      "minLength": 1,
+      "description": "原文正文，逐字存储，写入后不可变"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "材料原始产生时间（可由 frontmatter / 文件名 / 正文日期机械提取）"
+    },
+    "source": {
+      "type": "string",
+      "description": "机械来源标识，如 markdown / text / douban（V1 仅 markdown/text，未来 douban 等）"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["diary", "movie_review", "book_review", "essay", "other"],
+      "description": "内容类型，来自 provenance（用户 / 导入适配器指定：日记 / 影评 / 书评 / 随笔 / 其他），绝不来自 AI 语义判断"
+    },
+    "source_ref": {
+      "type": ["string", "null"],
+      "description": "来源引用，如文件名 / URL / 条目定位"
+    },
+    "metadata": {
+      "type": ["object", "null"],
+      "description": "机械提取的附属信息（date / title / author 等），不含任何 AI 解释"
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "content+author+source+source_ref 的稳定哈希，用于导入去重"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": ["string", "null"] },
+    "status": { "type": ["string", "null"], "description": "导入期固定为 'raw'" }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["summary"] },
+      { "required": ["interpretation"] },
+      { "required": ["sentiment"] },
+      { "required": ["topic"] },
+      { "required": ["thought"] },
+      { "required": ["embedding"] }
+    ]
+  }
+}

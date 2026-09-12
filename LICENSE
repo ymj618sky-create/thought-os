@@ -1,0 +1,36 @@
+Thought OS — Open Specification & Reference Kernel
+====================================================
+
+This repository is released under a **dual license**. The license that applies
+depends on the kind of work, identified by its path.
+
+1. DOCUMENTATION & SPECIFICATIONS  —  Creative Commons Attribution 4.0 (CC BY 4.0)
+   ----------------------------------------------------------------------------
+   The following are Open Specification assets, freely reusable with attribution:
+
+     constitution/   Constitution and Mission (the highest authority layer)
+     specs/          concepts, schemas, protocols, architecture, evaluation
+     adr/            published Architecture Decision Records (curated subset)
+
+   Terms: see LICENSE-DOCS.
+
+2. SOFTWARE CODE  —  MIT License
+   ---------------------------------
+   The reference implementation code is licensed under the MIT License:
+
+     kernel/         the reference Thought OS kernel
+     tests/          OSS self-validation (filtered to be Mirror-independent)
+
+   Terms: see LICENSE-CODE.
+
+NOT part of this open release (proprietary — not licensed here):
+  The Mirror product code (mirror/), agent prompts (agents/), reference product
+  (reference/), mobile/desktop apps (apps/), website (site/), and any SaaS /
+  billing layers remain the copyright of the author and are not published.
+
+Attribution (CC BY 4.0): if you reuse or build upon the Constitution,
+specifications, schemas, or ADRs, you must credit "Thought OS — Mingjie Ye
+(叶明杰)", link to this license, and indicate if changes were made. The license
+does not grant any trademark rights and does not imply endorsement.
+
+Copyright © 2026 Mingjie Ye (叶明杰).

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thought-os.dev/schemas/Decision.schema.json",
+  "title": "Decision",
+  "description": "一次决策记录：思考进入现实的接口。ADR-0020 §6.2。Thought OS 帮助用户定义问题、找证据、找隐含假设、找反例、比较方案、暴露不确定性、预测结果、记录决定——但 Thought OS 不替用户决定。decision 字段只能由用户动作写入，系统推断的『建议』只能落在 options/assumptions/risks，绝不可直接写入 decision。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "user_id",
+    "problem",
+    "status",
+    "options",
+    "assumptions",
+    "evidence_ids",
+    "thought_ids",
+    "expected_outcomes",
+    "risks",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "唯一标识"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "所属用户（S-2.1：可导出、可追溯）"
+    },
+    "problem": {
+      "type": "string",
+      "minLength": 1,
+      "description": "正在被决定的问题本身。决策质量首先取决于问题定义，故为必填且不可为空。"
+    },
+    "options": {
+      "type": "array",
+      "description": "候选方案。可含系统建议的方案，但每个方案都只是候选，不等价于决定。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string", "description": "方案名（如『开源核心 Kernel』）" },
+          "description": { "type": ["string", "null"], "description": "方案说明" },
+          "proposed_by": {
+            "type": "string",
+            "enum": ["user", "mirror"],
+            "default": "user",
+            "description": "由谁提出。用于区分『用户自己的选项』与『系统补充的选项』，UI 必须可区分。"
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "关键隐含假设。这是 Challenge 能力的主要作用点：系统负责找出用户没写出来的假设，但不得替用户删除或替用户认定其成立。"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "支撑本次决策的 Evidence id（S-3.1 可追溯）。包含 self / world / action 三类来源。"
+    },
+    "thought_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "过去与该问题相关的 Thought id（与 Thought.decisions_influenced 互为反向索引）。使『过去的判断』真正参与当下的决策。"
+    },
+    "expected_outcomes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "预期结果。Outcome 回流时与之对照，形成 Reality Feedback（ADR-0020 §16 P4）。"
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "已知风险与失败模式。"
+    },
+    "counter_evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "反方证据/反例（ADR-0020 §6.2）。Challenge 能力的落点，与 risks 的区别：risks 是未来可能发生的，counter_evidence 是已经存在的不利事实。"
+    },
+    "decision": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "用户最终选择的方案。为 null 表示尚未决定。**只能由用户动作写入**；系统不得自动填充。这是宪法边界（ADR-0020 §18）在此实体的落点。"
+    },
+    "decided_option_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "若 decision 对应 options 中某项，记录其 id，便于结构化统计决策模式。"
+    },
+    "rationale": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "用户自己的决策理由。同样只由用户写入。"
+    },
+    "decided_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "用户做出决定的时间，不是系统生成建议的时间。"
+    },
+    "review_date": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "回顾日期（ADR-0020 §6.2）。到期后由 Notice Engine 作为『decision worth revisiting』候选提出。"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["drafting", "decided", "reviewed", "abandoned"],
+      "description": "drafting=仍在定义问题/找证据；decided=用户已决定（decision 非 null）；reviewed=已回顾过结果；abandoned=用户放弃该决策。"
+    },
+    "outcome_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "description": "关联的 Outcome id（反向索引，权威数据在 Outcome.decision_id）。"
+    },
+    "space_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "所属 Thinking Space id。上层聚合归属，不参与 Kernel 认知校验。"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "decided" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["decision", "decided_at"],
+        "properties": {
+          "decision": { "type": "string", "minLength": 1 },
+          "decided_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  ]
+}
